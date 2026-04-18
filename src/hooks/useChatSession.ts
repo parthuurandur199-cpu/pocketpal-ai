@@ -9,7 +9,7 @@ import {chatSessionRepository} from '../repositories/ChatSessionRepository';
 
 import {randId} from '../utils';
 import {L10nContext} from '../utils';
-import {chatSessionStore, modelStore, palStore, uiStore} from '../store';
+import {chatSessionStore, modelStore, palStore} from '../store';
 
 import {MessageType, User} from '../utils/types';
 import {createMultimodalWarning} from '../utils/errors';
@@ -252,10 +252,32 @@ export const useChatSession = (
       model: modelStore.activeModel,
     });
 
+    // ==========================================================
+    // --- NEW WEB SEARCH INTERCEPTION LOGIC ---
+    // ==========================================================
+    let promptContentForAI = message.text;
+
+    // Check if the toggle is ON in UIStore
+    if (uiStore.isWebSearchEnabled) {
+      try {
+        promptContentForAI = await WebSearchAgent.augmentPromptWithWebData(message.text);
+      } catch (searchError) {
+        console.warn("Web search failed, falling back to original prompt:", searchError);
+        promptContentForAI = message.text; 
+      }
+    }
+
+    // Create a modified message object specifically for the AI to process.
+    const modifiedMessageForAI: MessageType.PartialText = {
+      ...message,
+      text: promptContentForAI, 
+    };
+    // ==========================================================
+
     // Prepare completion parameters and create message record
     const {cleanCompletionParams, messageInfo} = await prepareCompletion({
       imageUris: imageUris || [],
-      message,
+      message: modifiedMessageForAI, // Pass the modified message with search context here
       systemMessages,
       contextId,
       assistant,
