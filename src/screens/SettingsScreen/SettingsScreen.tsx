@@ -936,6 +936,35 @@ export const SettingsScreen: React.FC = observer(() => {
                     }
                   />
                 </View>
+                {/* ========================================== */}
+                {/* NEW: Real-Time Web Search Toggle           */}
+                {/* ========================================== */}
+                <Divider />
+                <View style={styles.switchContainer}>
+                  <View style={styles.textContainer}>
+                    <View style={styles.labelWithIconContainer}>
+                      <GlobeIcon
+                        width={20}
+                        height={20}
+                        style={styles.settingIcon}
+                        stroke={theme.colors.onSurface}
+                      />
+                      <Text variant="titleMedium" style={styles.textLabel}>
+                        Real-Time Web Search
+                      </Text>
+                    </View>
+                    <Text variant="labelSmall" style={styles.textDescription}>
+                      Allows the AI to browse the web for up-to-date answers. 
+                      Automatically ignores simple greetings.
+                    </Text>
+                  </View>
+                  <Switch
+                    testID="web-search-switch"
+                    value={uiStore.isWebSearchEnabled}
+                    onValueChange={value => uiStore.setWebSearchEnabled(value)}
+                  />
+                </View>
+                {/* ========================================== */}
 
                 {/* Display Memory Usage (iOS only) */}
                 {Platform.OS === 'ios' && (
