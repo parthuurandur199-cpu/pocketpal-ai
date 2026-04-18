@@ -10,28 +10,6 @@ import {
 } from '../locales';
 import {ErrorState} from '../utils/errors';
 
-class UIStore {
-  // Add this property
-  useWebSearch: boolean = false; 
-
-  constructor() {
-    makeAutoObservable(this);
-    makePersistable(this, {
-      name: 'UIStore',
-      // Ensure 'useWebSearch' is added to the properties array to persist it
-      properties: ['useWebSearch', /* ...other existing properties */], 
-      storage: AsyncStorage,
-    });
-  }
-
-  // Add the action to toggle it
-  setUseWebSearch(value: boolean) {
-    this.useWebSearch = value;
-  }
-}
-
-export const uiStore = new UIStore();
-
 export class UIStore {
   static readonly GROUP_KEYS = {
     READY_TO_USE: 'ready_to_use',
