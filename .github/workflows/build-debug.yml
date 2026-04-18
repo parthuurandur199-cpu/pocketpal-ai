@@ -27,6 +27,11 @@ jobs:
       - name: Create fake google-services.json
         run: |
           echo '{"project_info":{"project_number":"123","project_id":"dummy"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:abc","android_client_info":{"package_name":"com.pocketpalai"}},"api_key":[{"current_key":"dummy"}]}]}' > android/app/google-services.json
+
+      - name: Bundle React Native Code
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
         
       - name: Build Debug APK
         working-directory: android
