@@ -23,6 +23,10 @@ jobs:
           
       - name: Install dependencies
         run: yarn install
+
+      - name: Create fake google-services.json
+        run: |
+          echo '{"project_info":{"project_number":"123","project_id":"dummy"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:abc","android_client_info":{"package_name":"com.pocketpal"}},"api_key":[{"current_key":"dummy"}]}]}' > android/app/google-services.json
         
       - name: Build Debug APK
         working-directory: android
