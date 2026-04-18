@@ -1,47 +1,55 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { makeAutoObservable } from 'mobx';
-import { makePersistable } from 'mobx-persist-store';
+// src/utils/WebSearchAgent.ts
 
-class WebSearchAgent {
-  isEnabled: boolean = false;
+export class WebSearchAgent {
+  // 1. Intent Detection: Decide if we actually need to search
+  static requiresSearch(prompt: string): boolean {
+    const lowerPrompt = prompt.toLowerCase().trim();
+    
+    // Skip short conversational greetings
+    const greetings = ['hi', 'hello', 'hey', 'how are you', 'good morning', 'thanks', 'bye'];
+    if (greetings.includes(lowerPrompt) || lowerPrompt.split(' ').length < 3) {
+      return false; 
+    }
 
-  constructor() {
-    makeAutoObservable(this);
-    makePersistable(this, {
-      name: 'WebSearchAgentStore',
-      properties: ['isEnabled'],
-      storage: AsyncStorage,
-    });
+    // Trigger search for question words or requests for recent information
+    const searchKeywords = ['who', 'what', 'where', 'when', 'why', 'how', 'current', 'today', 'news', 'latest'];
+    const hasSearchKeyword = searchKeywords.some(kw => lowerPrompt.includes(kw));
+
+    return hasSearchKeyword;
   }
 
-  toggleSearch(val: boolean) {
-    this.isEnabled = val;
-  }
-
-  async performSearch(query: string): Promise<string> {
+  // 2. Fetch results from a search API (Using DuckDuckGo HTML or Tavily API as an example)
+  static async performSearch(query: string): Promise<string> {
     try {
+      // Example using a generic search API endpoint
+      // You can replace this with SerpAPI, Tavily, or a custom backend
       const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`);
       const data = await response.json();
       
-      if (data.AbstractText) return data.AbstractText;
-      if (data.RelatedTopics && data.RelatedTopics.length > 0) return data.RelatedTopics[0].Text || "No clear summary found.";
-      return "No relevant information found on the web.";
+      if (data.AbstractText) {
+        return data.AbstractText;
+      } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+        return data.RelatedTopics.slice(0, 3).map((t: any) => t.Text).join(' \n');
+      }
+      
+      return "No highly relevant web results found.";
     } catch (error) {
-      return "Web search failed due to a network error.";
+      console.error("Web search failed:", error);
+      return "";
     }
   }
 
-  injectSystemPrompt(messages: any[]): any[] {
-    if (!this.isEnabled) return messages;
+  // 3. Inject results into the Local Model's Prompt Context
+  static async augmentPromptWithWebData(prompt: string): Promise<string> {
+    if (!this.requiresSearch(prompt)) {
+      return prompt; // Return original prompt if no search is needed
+    }
 
-    const TOOL_PROMPT = `
-You are a helpful AI with access to a Web Search tool.
-If the user asks for real-time facts, current events, or things you do not know, you MUST output exactly: <SEARCH>the exact search query</SEARCH>.
-If the user says a greeting (like "Hi" or "How are you") or asks a general conversational question, DO NOT use the search tool. Answer normally.`;
+    const searchResults = await this.performSearch(prompt);
+    
+    if (!searchResults) return prompt;
 
-    // Add the tool instruction as the very first system message
-    return [{ role: 'system', content: TOOL_PROMPT }, ...messages];
+    // Wrap the results so the local model understands how to use them
+    return `Based on real-time web search results:\n"""\n${searchResults}\n"""\n\nUser Query: ${prompt}\nAnswer the query using the provided web results if they are relevant.`;
   }
 }
-
-export const webSearchAgent = new WebSearchAgent();
