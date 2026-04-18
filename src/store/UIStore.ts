@@ -28,6 +28,9 @@ export class UIStore {
   // This is a flag to auto-navigate to the chat page after loading a model
   autoNavigatetoChat = true;
 
+  // NEW: Web Search Feature Toggle (defaults to false)
+  isWebSearchEnabled = false;
+
   //colorScheme = useColorScheme();
   colorScheme: 'light' | 'dark' =
     Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
@@ -79,6 +82,7 @@ export class UIStore {
         'displayMemUsage',
         'benchmarkShareDialog',
         '_language',
+        'isWebSearchEnabled', // NEW: Added to persistable properties
       ],
       storage: AsyncStorage,
     });
@@ -112,6 +116,7 @@ export class UIStore {
       this._language = language;
     });
   }
+  
   get language() {
     // If the language is not in l10n, return 'en'
     // This can happen when the app removes a language from l10n
@@ -125,6 +130,13 @@ export class UIStore {
   setAutoNavigateToChat(value: boolean) {
     runInAction(() => {
       this.autoNavigatetoChat = value;
+    });
+  }
+
+  // NEW: Setter for Web Search
+  setWebSearchEnabled(value: boolean) {
+    runInAction(() => {
+      this.isWebSearchEnabled = value;
     });
   }
 
